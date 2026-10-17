@@ -56,7 +56,7 @@ An institutional verification engine that cross-examines the generated audit aga
 ### 4. Institutional IC Memo Export
 
 * One-click generation of institutional 2-page Investment Committee Memos.
-* Exportable directly to high-fidelity PDF via `jspdf` and `html2canvas-pro`.
+* Exportable directly to high-fidelity PDF.
 * Ready for presentation at weekly partnership meetings.
 
 ---
@@ -64,7 +64,7 @@ An institutional verification engine that cross-examines the generated audit aga
 ### 5. Multi-Role Authentication & Access Control (RBAC)
 
 * **Google OAuth & Email Credentials**: Seamless authentication powered by Firebase Auth.
-* **Production HTTPS COOP Compatibility**: Configured with Helmet security headers allowing uninterrupted OAuth popup communication (`window.opener`).
+* **Production HTTPS COOP Compatibility**: Configured with Helmet security headers allowing uninterrupted OAuth popup communication.
 * **Administrator Review Workflow**: Gated user onboarding with real-time approval queue, Firestore persistence, and email notifications via Nodemailer.
 
 ---
@@ -116,9 +116,9 @@ npm run start
 
 ## 🔒 Security & Environment Setup
 
-* **Gemini API Key**: Never exposed to the client browser. All calls route through secure server-side proxies (`/api/pitch-audit`, `/api/pitch-copilot`, `/api/grounding-audit`).
+* **Gemini API Key**: Never exposed to the client browser. All calls route through secure server-side proxies.
 * **Firebase Authorized Domains**: When deploying to production domains (e.g., Cloud Run or custom domains), add your domain to **Firebase Console $\rightarrow$ Authentication $\rightarrow$ Settings $\rightarrow$ Authorized domains**.
-* **COOP Policy**: Server uses `crossOriginOpenerPolicy: false` to allow seamless Google OAuth popup handshakes.
+* **COOP Policy**: Server allows seamless Google OAuth popup handshakes.
 
 ---
 
