@@ -1,0 +1,214 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isLeadAdmin() {
+      return isSignedIn() &&
+        request.auth.token != null &&
+        'email' in request.auth.token &&
+        request.auth.token.email.lower() == 'sbkariya99@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        isLeadAdmin() ||
+        (request.auth.token != null && (
+          ('admin' in request.auth.token && request.auth.token.admin == true) ||
+          ('role' in request.auth.token && request.auth.token.role == 'admin')
+        )) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // User profile validation
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['userId', 'email']) &&
+        data.keys().hasOnly(['userId', 'email', 'displayName', 'photoURL', 'role', 'status', 'authProvider', 'otpVerified', 'createdAt', 'lastLoginAt', 'approvedAt', 'approvedBy']) &&
+        data.userId == userId &&
+        data.email is string && data.email.size() <= 150 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+        (!('role' in data) || (data.role is string && (data.role == 'member' || data.role == 'admin'))) &&
+        (!('status' in data) || (data.status is string && (data.status == 'PENDING_APPROVAL' || data.status == 'APPROVED' || data.status == 'REJECTED'))) &&
+        (!('authProvider' in data) || (data.authProvider is string && data.authProvider.size() <= 50)) &&
+        (!('otpVerified' in data) || (data.otpVerified is bool)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100)) &&
+        (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 100)) &&
+        (!('approvedAt' in data) || (data.approvedAt is string && data.approvedAt.size() <= 100)) &&
+        (!('approvedBy' in data) || (data.approvedBy is string && data.approvedBy.size() <= 150));
+    }
+
+    match /users/{userId} {
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow list: if isAdmin();
+
+      // CREATE:
+      // Admins can create user profiles with any valid role and status.
+      // Standard users can only create their own profile with 'member' role and 'PENDING_APPROVAL' status,
+      // strictly forbidding client-side self-assignment of admin role, approved status, or approval stamps.
+      allow create: if isValidId(userId) && isValidUserProfile(incoming(), userId) && (
+        isAdmin() ||
+        (
+          isOwner(userId) &&
+          incoming().role == 'member' &&
+          incoming().status == 'PENDING_APPROVAL' &&
+          !('approvedAt' in incoming()) &&
+          !('approvedBy' in incoming())
+        )
+      );
+
+      // UPDATE:
+      // Admins can update any user profile field.
+      // Standard users can ONLY update safe profile fields: ['displayName', 'photoURL', 'lastLoginAt'].
+      // Modifying role, status, approvedAt, approvedBy, email, or createdAt is strictly prohibited for clients.
+      allow update: if isValidId(userId) && isValidUserProfile(incoming(), userId) && incoming().userId == existing().userId && (
+        isAdmin() ||
+        (
+          isOwner(userId) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLoginAt']) &&
+          incoming().role == existing().role &&
+          incoming().status == existing().status &&
+          (!('approvedAt' in incoming()) || incoming().approvedAt == existing().approvedAt) &&
+          (!('approvedBy' in incoming()) || incoming().approvedBy == existing().approvedBy) &&
+          incoming().email == existing().email &&
+          incoming().createdAt == existing().createdAt
+        )
+      );
+
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // Access requests validation & permissions
+    function isValidAccessRequest(data) {
+      return data.keys().hasAll(['id', 'userId', 'email', 'status']) &&
+        data.keys().hasOnly(['id', 'userId', 'email', 'displayName', 'authProvider', 'status', 'otpVerified', 'requestedAt', 'updatedAt', 'decisionBy']) &&
+        data.email is string && data.email.size() <= 150 &&
+        data.status is string && (data.status == 'PENDING_APPROVAL' || data.status == 'APPROVED' || data.status == 'REJECTED') &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('authProvider' in data) || (data.authProvider is string && data.authProvider.size() <= 50)) &&
+        (!('otpVerified' in data) || (data.otpVerified is bool)) &&
+        (!('requestedAt' in data) || (data.requestedAt is string && data.requestedAt.size() <= 100)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 100)) &&
+        (!('decisionBy' in data) || (data.decisionBy is string && data.decisionBy.size() <= 150));
+    }
+
+    match /access_requests/{requestId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(requestId) && incoming().userId == request.auth.uid && (isAdmin() || incoming().status == 'PENDING_APPROVAL') && isValidAccessRequest(incoming());
+      allow update: if isSignedIn() && isValidId(requestId) && isValidAccessRequest(incoming()) && (
+        isAdmin() ||
+        (
+          incoming().userId == request.auth.uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']) &&
+          incoming().status == existing().status &&
+          (!('decisionBy' in incoming()) || incoming().decisionBy == existing().decisionBy)
+        )
+      );
+      allow delete: if isAdmin() && isValidId(requestId);
+    }
+
+    // Saved analyses validation
+    function isValidSavedAnalysis(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'ticker', 'companyName', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'ticker', 'companyName', 'signal', 'convictionScore', 'verdictSummary', 'memoMarkdown', 'createdAt', 'updatedAt']) &&
+        data.ownerId == request.auth.uid &&
+        data.id is string && isValidId(data.id) &&
+        data.ticker is string && data.ticker.size() <= 20 &&
+        data.companyName is string && data.companyName.size() <= 120 &&
+        (!('signal' in data) || (data.signal is string && data.signal.size() <= 50)) &&
+        (!('convictionScore' in data) || (data.convictionScore is number && data.convictionScore >= 0 && data.convictionScore <= 100)) &&
+        (!('verdictSummary' in data) || (data.verdictSummary is string && data.verdictSummary.size() <= 2000)) &&
+        (!('memoMarkdown' in data) || (data.memoMarkdown is string && data.memoMarkdown.size() <= 150000));
+    }
+
+    match /analyses/{analysisId} {
+      allow get: if isSignedIn() && isValidId(analysisId) && resource.data.ownerId == request.auth.uid;
+      // Query Enforcer: rule explicitly enforces data owner is the authenticated user
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(analysisId) && incoming().id == analysisId && isValidSavedAnalysis(incoming());
+      allow update: if isSignedIn() && isValidId(analysisId) && incoming().id == analysisId && isValidSavedAnalysis(incoming()) && incoming().ownerId == existing().ownerId && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && isValidId(analysisId) && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Persistent Deals validation
+    function isValidDeal(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'companyName', 'sector', 'stage', 'reportJson', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'ownerId', 'companyName', 'tagline', 'sector', 'stage', 'targetRaise', 'valuationClaim', 'deckSummary', 'rawPitchText', 'signal', 'convictionScore', 'verdictSummary', 'reportJson', 'isPreset', 'createdAt', 'updatedAt']) &&
+        data.ownerId == request.auth.uid &&
+        data.id is string && isValidId(data.id) &&
+        data.companyName is string && data.companyName.size() <= 150 &&
+        data.sector is string && data.sector.size() <= 50 &&
+        data.stage is string && data.stage.size() <= 50 &&
+        data.reportJson is string && data.reportJson.size() <= 500000 &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 300)) &&
+        (!('targetRaise' in data) || (data.targetRaise is string && data.targetRaise.size() <= 100)) &&
+        (!('valuationClaim' in data) || (data.valuationClaim is string && data.valuationClaim.size() <= 100)) &&
+        (!('deckSummary' in data) || (data.deckSummary is string && data.deckSummary.size() <= 3000)) &&
+        (!('rawPitchText' in data) || (data.rawPitchText is string && data.rawPitchText.size() <= 50000)) &&
+        (!('signal' in data) || (data.signal is string && data.signal.size() <= 50)) &&
+        (!('convictionScore' in data) || (data.convictionScore is number && data.convictionScore >= 0 && data.convictionScore <= 100)) &&
+        (!('verdictSummary' in data) || (data.verdictSummary is string && data.verdictSummary.size() <= 3000)) &&
+        (!('isPreset' in data) || (data.isPreset is bool)) &&
+        data.createdAt is string && data.createdAt.size() <= 100 &&
+        data.updatedAt is string && data.updatedAt.size() <= 100;
+    }
+
+    match /deals/{dealId} {
+      allow get: if isSignedIn() && isValidId(dealId) && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(dealId) && incoming().id == dealId && isValidDeal(incoming());
+      allow update: if isSignedIn() && isValidId(dealId) && incoming().id == dealId && isValidDeal(incoming()) && incoming().ownerId == existing().ownerId;
+      allow delete: if isSignedIn() && isValidId(dealId) && (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+
+    // Persistent PitchAI Copilot Chat Sessions
+    function isValidChatThread(data, chatId) {
+      return data.keys().hasAll(['id', 'userId', 'messagesJson', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'userId', 'dealId', 'companyName', 'messagesJson', 'createdAt', 'updatedAt']) &&
+        data.userId == request.auth.uid &&
+        data.id is string && data.id == chatId && isValidId(data.id) &&
+        (!('dealId' in data) || (data.dealId is string && data.dealId.size() <= 100)) &&
+        (!('companyName' in data) || (data.companyName is string && data.companyName.size() <= 150)) &&
+        data.messagesJson is string && data.messagesJson.size() <= 1000000 &&
+        data.createdAt is string && data.createdAt.size() <= 100 &&
+        data.updatedAt is string && data.updatedAt.size() <= 100;
+    }
+
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && isValidId(chatId) && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(chatId) && incoming().userId == request.auth.uid && isValidChatThread(incoming(), chatId);
+      allow update: if isSignedIn() && isValidId(chatId) && incoming().userId == request.auth.uid && isValidChatThread(incoming(), chatId) && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && isValidId(chatId) && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

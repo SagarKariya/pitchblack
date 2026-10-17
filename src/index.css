@@ -1,0 +1,289 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..900;1,400..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --color-primary-white: #FFFFFF;
+  --color-secondary-black: #09090b;
+  --color-tertiary-emerald: #10b981;
+  --color-tertiary-blue: #3b82f6;
+}
+
+/* Clean Institutional Venture Intelligence Theme (Light Mode) */
+:root, [data-theme="light"], [data-theme="original"] {
+  --bg: #f5f7fc;
+  --ink: #09090b;
+  --accent: #10b981;
+
+  --canvas-bg: #f5f7fc;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(226, 232, 240, 0.85);
+  --ink-primary: #09090b;
+  --ink-secondary: #18181b;
+  --ink-body: #27272a;
+  --ink-muted: #52525b;
+
+  /* Ambient Chromatic Glow Mesh Orbs */
+  --glow-1: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%);
+  --glow-2: radial-gradient(circle, rgba(59, 130, 246, 0.20) 0%, transparent 70%);
+  --glow-3: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, transparent 70%);
+  --glow-4: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, transparent 70%);
+
+  /* Light Theme Glass Primitives */
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-header-bg: rgba(255, 255, 255, 0.88);
+  --glass-subtle-bg: rgba(248, 250, 252, 0.75);
+  --glass-chip-bg: rgba(255, 255, 255, 0.90);
+  --glass-card-border: rgba(226, 232, 240, 0.85);
+  --glass-card-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
+  --glass-inner-rim: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+  --glass-card-shadow-hover: 0 20px 35px -5px rgba(15, 23, 42, 0.08);
+
+  --accent-primary: #09090b;
+  --accent-secondary: #10b981;
+  --accent-vibrant: #059669;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #064e3b !important;
+}
+
+@layer base {
+  html, body, #root {
+    min-height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    background-color: var(--canvas-bg);
+    color: var(--ink-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Accessible Keyboard Focus Ring */
+  :focus-visible {
+    outline: 2px solid #059669 !important;
+    outline-offset: 2px !important;
+    border-radius: 6px;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #059669 !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Universal Monospace & Tabular Figures */
+.font-mono, [class*="font-mono"] {
+  font-family: var(--font-mono) !important;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum" 1;
+}
+
+.tabular-nums,
+[data-metric],
+.metric-value,
+span:is(.font-mono, [class*="font-mono"]) {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Frosted Glass Cards (.bg-white / .glass-panel) */
+.glass-panel,
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Enhanced Frosted Glass for cards using .bg-white */
+.bg-white:is(.rounded-2xl, .rounded-3xl, .rounded-xl):not(.no-glass, button, input, select, textarea, [role="menuitem"], [role="option"]) {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(226, 232, 240, 0.85);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* Subtle Nested Wells (.bg-zinc-50) */
+.glass-well,
+.bg-zinc-50:is(.rounded-xl, .rounded-2xl, .rounded-lg):not(.no-glass, button, input, select, textarea) {
+  background-color: rgba(248, 250, 252, 0.75);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03);
+}
+
+.glass-chip {
+  background-color: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--canvas-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   INSTITUTIONAL PRINT-ONLY STYLES FOR MEMO & PDF GENERATION
+   ============================================================ */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 12mm 15mm;
+  }
+
+  /* Universal Print Color Fidelity */
+  *, *:before, *:after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Base Typography & Background Clean-Up */
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide Ambient & Interactive App chrome when printing */
+  header,
+  nav,
+  aside,
+  footer,
+  button,
+  .no-print,
+  #pillars-horizontal-strip,
+  canvas {
+    display: none !important;
+  }
+
+  /* Modal Backdrop Decoupling: Transform modal into pristine full-width print document */
+  #export-memo-modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    display: block !important;
+  }
+
+  #export-memo-modal-container {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  #printable-memo-content {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Prevent awkwardly breaking cards or tables across page splits */
+  .print-avoid-break,
+  table,
+  tr,
+  .card-item,
+  .directive-card,
+  .scenario-box,
+  .stat-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-page-break {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* SVG Icon Protection: Ensure vector strokes and fills print without corruption */
+  svg {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure text colors remain sharp and high-contrast in grayscale/color printers */
+  .text-zinc-900, .text-zinc-800, .text-slate-900 {
+    color: #0f172a !important;
+  }
+  .text-zinc-700, .text-zinc-600, .text-slate-600 {
+    color: #334155 !important;
+  }
+}

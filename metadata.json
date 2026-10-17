@@ -1,0 +1,8 @@
+{
+  "name": "Remix Pitch Black AI 2",
+  "description": "Pitch Black: Elite AI Venture Intelligence Copilot \u0026 Senior Diligence Director performing institutional-grade investment audits across a16z, Sequoia, Bessemer, and Benchmark VC frameworks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

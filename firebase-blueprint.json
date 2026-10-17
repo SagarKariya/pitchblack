@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The unique user ID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User profile avatar URL" },
+        "role": { "type": "string", "description": "User access role: admin or member" },
+        "status": { "type": "string", "description": "Approval status: APPROVED, PENDING_APPROVAL, REJECTED" },
+        "otpVerified": { "type": "boolean", "description": "Whether the user email has been verified via OTP" },
+        "createdAt": { "type": "string", "description": "Timestamp of account creation" },
+        "lastLoginAt": { "type": "string", "description": "Timestamp of last login" },
+        "approvedAt": { "type": "string", "description": "Timestamp of admin approval" },
+        "approvedBy": { "type": "string", "description": "Admin email who approved access" }
+      },
+      "required": ["userId", "email"]
+    },
+    "AccessRequest": {
+      "title": "AccessRequest",
+      "description": "User account access request requiring admin approval",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Request ID or User ID" },
+        "userId": { "type": "string", "description": "Applicant User UID" },
+        "email": { "type": "string", "description": "Applicant Email" },
+        "displayName": { "type": "string", "description": "Applicant Name" },
+        "status": { "type": "string", "description": "Status: PENDING_APPROVAL, APPROVED, REJECTED" },
+        "otpVerified": { "type": "boolean", "description": "Whether email OTP was confirmed" },
+        "requestedAt": { "type": "string", "description": "Timestamp when requested" },
+        "updatedAt": { "type": "string", "description": "Timestamp when reviewed" },
+        "decisionBy": { "type": "string", "description": "Admin who made decision" }
+      },
+      "required": ["id", "userId", "email", "status"]
+    },
+    "SavedAnalysis": {
+      "title": "SavedAnalysis",
+      "description": "Saved institutional investment diligence analysis and memo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Analysis ID" },
+        "ownerId": { "type": "string", "description": "Owner user UID" },
+        "ticker": { "type": "string", "description": "Company ticker or symbol" },
+        "companyName": { "type": "string", "description": "Company name" },
+        "signal": { "type": "string", "description": "Investment signal classification" },
+        "convictionScore": { "type": "number", "description": "Conviction score 0-100" },
+        "verdictSummary": { "type": "string", "description": "High level verdict" },
+        "memoMarkdown": { "type": "string", "description": "Generated memo content" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["id", "ownerId", "ticker", "companyName", "createdAt", "updatedAt"]
+    },
+    "Deal": {
+      "title": "Deal",
+      "description": "Full persistent startup diligence deal and 9-pillar audit report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique deal ID" },
+        "ownerId": { "type": "string", "description": "Owner user UID" },
+        "companyName": { "type": "string", "description": "Startup company name" },
+        "tagline": { "type": "string", "description": "One-line thesis or company description" },
+        "sector": { "type": "string", "description": "Industry sector classification" },
+        "stage": { "type": "string", "description": "Fundraising round or stage" },
+        "targetRaise": { "type": "string", "description": "Target capital raise description" },
+        "valuationClaim": { "type": "string", "description": "Target valuation claim" },
+        "deckSummary": { "type": "string", "description": "Executive pitch summary" },
+        "rawPitchText": { "type": "string", "description": "Raw pitch transcript or notes" },
+        "signal": { "type": "string", "description": "Conviction verdict signal" },
+        "convictionScore": { "type": "number", "description": "Quantitative conviction score 0-100" },
+        "verdictSummary": { "type": "string", "description": "Executive IC verdict" },
+        "reportJson": { "type": "string", "description": "Full serialized 9-pillar diligence report JSON" },
+        "isPreset": { "type": "boolean", "description": "Whether this deal was seeded as a preset" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["id", "ownerId", "companyName", "sector", "stage", "reportJson", "createdAt", "updatedAt"]
+    },
+    "ChatThread": {
+      "title": "ChatThread",
+      "description": "PitchAI partner copilot chat conversation history for authenticated user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Chat thread ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "dealId": { "type": "string", "description": "Associated deal ID" },
+        "companyName": { "type": "string", "description": "Startup company name" },
+        "messagesJson": { "type": "string", "description": "Serialized JSON array of ChatMessage objects" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["id", "userId", "messagesJson", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile record"
+    },
+    "/access_requests/{requestId}": {
+      "schema": "AccessRequest",
+      "description": "Access approval requests for admin review"
+    },
+    "/analyses/{analysisId}": {
+      "schema": "SavedAnalysis",
+      "description": "User diligence memo analyses"
+    },
+    "/deals/{dealId}": {
+      "schema": "Deal",
+      "description": "User's persistent startup diligence deal records with full 9-pillar audits"
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatThread",
+      "description": "Persistent PitchAI partner copilot chat sessions per user"
+    }
+  }
+}
